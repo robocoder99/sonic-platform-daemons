@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+
+"""
+    chassisshow
+    Chassis information update tool for SONiC
+    This tool runs one time at the launch of the platform monitor in order to populate STATE_DB with chassis information such as model, serial number, and revision.
+"""
+
+try:
+    import sys
+
+    from sonic_py_common import daemon_base, logger
+
+except ImportError as e:
+    raise ImportError(str(e) + " - required module not found")
+
+#
+# Constants
+#
+
+SYSLOG_IDENTIFIER = "chassisshow"
+
+CHASSIS_INFO_TABLE = 'CHASSIS_TABLE'
+CHASSIS_INFO_KEY_TEMPLATE = 'CHASSIS {}'
+CHASSIS_INFO_CARD_NUM_FIELD = 'module_num'
+CHASSIS_INFO_SERIAL_FIELD = 'serial'
+CHASSIS_INFO_MODEL_FIELD = 'model'
+CHASSIS_INFO_REV_FIELD = 'revision'
+
+CHASSIS_LOAD_ERROR = 1
+
+#
+# Functions
+# 
+
+def provision_db():
+
+    log = logger.Logger(SYSLOG_IDENTIFIER)
+    log.log_info("Provisioning Database with Chassis Info...")
+
+    # Load platform api class
+    try:
+        import sonic_platform.platform
+        platform_chassis = sonic_platform.platform.Platform().get_chassis()
+    except Exception as e:
+        log.log_error("Failed to load chassis due to {}".format(repr(e)))
+        sys.exit(CHASSIS_LOAD_ERROR)
+
+    # Init state db connection
+    state_db = daemon_base.db_connect("STATE_DB")
+    chassis_table = swsscommon.Table(state_db, CHASSIS_INFO_TABLE)
+    module_table = swsscommon.Table(state_db, CHASSIS_MODULE_INFO_TABLE)
+    midplane_table = swsscommon.Table(state_db, CHASSIS_MIDPLANE_INFO_TABLE)
+
+    # Populate DB with chassis hardware info 
+    fvs = swsscommon.FieldValuePairs([
+                                        (CHASSIS_INFO_SERIAL_FIELD, platform_chassis.get_serial()),
+                                        (CHASSIS_INFO_MODEL_FIELD, platform_chassis.get_model()),
+                                        (CHASSIS_INFO_REV_FIELD, platform_chassis.get_revision())
+                                    ])
+    chassis_table.set(CHASSIS_INFO_KEY_TEMPLATE.format(1), fvs)
+    log.log_info("STATE_DB provisioned with chassis info.")
+
+
+#
+# Main
+#
+
+def main():
+    provision_db()
+
+if __name__ == '__main__':
+    main()
