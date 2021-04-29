@@ -15,6 +15,7 @@ setup(
     ],
     scripts=[
         'scripts/chassisd',
+        'scripts/chassisshow'
     ],
     setup_requires=[
         'pytest-runner',
