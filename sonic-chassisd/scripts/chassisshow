@@ -33,19 +33,7 @@ CHASSIS_LOAD_ERROR = 1
 # Functions
 # 
 
-def provision_db():
-
-    log = logger.Logger(SYSLOG_IDENTIFIER)
-    log.log_info("Provisioning Database with Chassis Info...")
-
-    # Load platform api class
-    try:
-        import sonic_platform.platform
-        platform_chassis = sonic_platform.platform.Platform().get_chassis()
-    except Exception as e:
-        log.log_error("Failed to load chassis due to {}".format(repr(e)))
-        sys.exit(CHASSIS_LOAD_ERROR)
-
+def provision_db(platform_chassis, log):
     # Init state db connection
     state_db = daemon_base.db_connect("STATE_DB")
     chassis_table = swsscommon.Table(state_db, CHASSIS_INFO_TABLE)
@@ -61,13 +49,26 @@ def provision_db():
     chassis_table.set(CHASSIS_INFO_KEY_TEMPLATE.format(1), fvs)
     log.log_info("STATE_DB provisioned with chassis info.")
 
+    return chassis_table
+
 
 #
 # Main
 #
 
 def main():
-    provision_db()
+    log = logger.Logger(SYSLOG_IDENTIFIER)
+    log.log_info("Provisioning Database with Chassis Info...")
+
+    # Load platform api class
+    try:
+        import sonic_platform.platform
+        platform_chassis = sonic_platform.platform.Platform().get_chassis()
+    except Exception as e:
+        log.log_error("Failed to load chassis due to {}".format(repr(e)))
+        sys.exit(CHASSIS_LOAD_ERROR)
+
+    provision_db(platform_chassis, log)
 
 if __name__ == '__main__':
     main()
