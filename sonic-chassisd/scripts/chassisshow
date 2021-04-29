@@ -7,10 +7,16 @@
 """
 
 try:
+    import os
     import sys
 
     from sonic_py_common import daemon_base, logger
 
+    # If unit testing is occurring, mock swsscommon and module_base
+    if os.getenv("CHASSISSHOW_UNIT_TESTING") == "1":
+        from tests import mock_swsscommon as swsscommon
+    else:
+        from swsscommon import swsscommon
 except ImportError as e:
     raise ImportError(str(e) + " - required module not found")
 
@@ -37,8 +43,6 @@ def provision_db(platform_chassis, log):
     # Init state db connection
     state_db = daemon_base.db_connect("STATE_DB")
     chassis_table = swsscommon.Table(state_db, CHASSIS_INFO_TABLE)
-    module_table = swsscommon.Table(state_db, CHASSIS_MODULE_INFO_TABLE)
-    midplane_table = swsscommon.Table(state_db, CHASSIS_MIDPLANE_INFO_TABLE)
 
     # Populate DB with chassis hardware info 
     fvs = swsscommon.FieldValuePairs([

@@ -93,11 +93,11 @@ class MockChassis:
     def init_midplane_switch(self):
         return True
 
-    def get_serial():
+    def get_serial(self):
         return "Serial No"
 
-    def get_model():
+    def get_model(self):
         return "Model A"
 
-    def get_revision():
+    def get_revision(self):
         return "Rev C"
