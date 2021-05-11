@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-    chassisshow
+    chassis_db_init
     Chassis information update tool for SONiC
     This tool runs one time at the launch of the platform monitor in order to populate STATE_DB with chassis information such as model, serial number, and revision.
 """
@@ -13,7 +13,7 @@ try:
     from sonic_py_common import daemon_base, logger
 
     # If unit testing is occurring, mock swsscommon and module_base
-    if os.getenv("CHASSISSHOW_UNIT_TESTING") == "1":
+    if os.getenv("CHASSIS_DB_INIT_UNIT_TESTING") == "1":
         from tests import mock_swsscommon as swsscommon
     else:
         from swsscommon import swsscommon
@@ -24,7 +24,7 @@ except ImportError as e:
 # Constants
 #
 
-SYSLOG_IDENTIFIER = "chassisshow"
+SYSLOG_IDENTIFIER = "chassis_db_init"
 
 CHASSIS_INFO_TABLE = 'CHASSIS_INFO'
 CHASSIS_INFO_KEY_TEMPLATE = 'chassis {}'
@@ -34,6 +34,33 @@ CHASSIS_INFO_MODEL_FIELD = 'model'
 CHASSIS_INFO_REV_FIELD = 'revision'
 
 CHASSIS_LOAD_ERROR = 1
+
+NOT_AVAILABLE = 'N/A'
+
+#
+# Helper functions =============================================================
+#
+
+# try get information from platform API and return a default value if caught NotImplementedError
+
+
+def try_get(callback, *args, **kwargs):
+    """
+    Handy function to invoke the callback and catch NotImplementedError
+    :param callback: Callback to be invoked
+    :param args: Arguments to be passed to callback
+    :param kwargs: Default return value if exception occur
+    :return: Default return value if exception occur else return value of the callback
+    """
+    default = kwargs.get('default', NOT_AVAILABLE)
+    try:
+        ret = callback(*args)
+        if ret is None:
+            ret = default
+    except NotImplementedError:
+        ret = default
+
+    return ret
 
 #
 # Functions
@@ -46,9 +73,9 @@ def provision_db(platform_chassis, log):
 
     # Populate DB with chassis hardware info 
     fvs = swsscommon.FieldValuePairs([
-                                        (CHASSIS_INFO_SERIAL_FIELD, platform_chassis.get_serial()),
-                                        (CHASSIS_INFO_MODEL_FIELD, platform_chassis.get_model()),
-                                        (CHASSIS_INFO_REV_FIELD, platform_chassis.get_revision())
+                                        (CHASSIS_INFO_SERIAL_FIELD, try_get(platform_chassis.get_serial),
+                                        (CHASSIS_INFO_MODEL_FIELD, try_get(platform_chassis.get_model),
+                                        (CHASSIS_INFO_REV_FIELD, try_get(platform_chassis.get_revision)
                                     ])
     chassis_table.set(CHASSIS_INFO_KEY_TEMPLATE.format(1), fvs)
     log.log_info("STATE_DB provisioned with chassis info.")

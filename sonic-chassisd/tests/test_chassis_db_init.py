@@ -8,7 +8,7 @@ from sonic_py_common import daemon_base
 from .mock_platform import MockChassis, MockModule
 from .mock_module_base import ModuleBase
 
-SYSLOG_IDENTIFIER = 'chassisshow_test'
+SYSLOG_IDENTIFIER = 'chassis_db_init_test'
 NOT_AVAILABLE = 'N/A'
 
 daemon_base.db_connect = MagicMock()
@@ -19,7 +19,7 @@ scripts_path = os.path.join(modules_path, "scripts")
 sys.path.insert(0, modules_path)
 
 os.environ["CHASSISSHOW_UNIT_TESTING"] = "1"
-load_source('chassisshow', scripts_path + '/chassisshow')
+load_source('chassis_db_init', scripts_path + '/chassis_db_init')
 from chassisshow import *
 
 
