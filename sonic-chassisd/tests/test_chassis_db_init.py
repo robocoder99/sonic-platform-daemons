@@ -20,7 +20,7 @@ sys.path.insert(0, modules_path)
 
 os.environ["CHASSISSHOW_UNIT_TESTING"] = "1"
 load_source('chassis_db_init', scripts_path + '/chassis_db_init')
-from chassisshow import *
+from chassis_db_init import *
 
 
 def test_provision_db():
